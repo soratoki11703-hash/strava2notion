@@ -20,6 +20,7 @@ class Activity(BaseModel):
     # Metrics
     distance_meters: float = Field(default=0.0)
     moving_time_seconds: int = Field(default=0)
+    elapsed_time_seconds: int = Field(default=0)
     total_elevation_gain: float = Field(default=0.0)
     weighted_average_watts: int | None = Field(default=None)
 
@@ -31,9 +32,15 @@ class Activity(BaseModel):
 
     @computed_field
     @property
-    def time_hours(self) -> float:
-        """Moving time in hours, rounded to 2 decimals."""
-        return round(self.moving_time_seconds / 3600, 2)
+    def moving_time_min(self) -> float:
+        """Moving time in minutes, rounded to 1 decimal."""
+        return round(self.moving_time_seconds / 60, 1)
+
+    @computed_field
+    @property
+    def elapsed_time_min(self) -> float:
+        """Elapsed time in minutes, rounded to 1 decimal."""
+        return round(self.elapsed_time_seconds / 60, 1)
 
     @computed_field
     @property
@@ -51,10 +58,11 @@ class Activity(BaseModel):
         return {
             "Name": {"title": [{"text": {"content": self.name}}]},
             "Type": {"select": {"name": self.activity_type}},
-            "Length": {"number": self.distance_km},
-            "Time": {"number": self.time_hours},
-            "Power": {"number": self.power},
-            "Elevation": {"number": self.total_elevation_gain},
+            "Distance (km)": {"number": self.distance_km},
+            "Moving Time (min)": {"number": self.moving_time_min},
+            "Elapsed Time (min)": {"number": self.elapsed_time_min},
+            "Power (W)": {"number": self.power},
+            "Elevation (m)": {"number": self.total_elevation_gain},
             "Date": {"date": {"start": str(self.start_date_local)}},
             "Strava Link": {"url": self.strava_url},
             "Strava ID": {"rich_text": [{"text": {"content": str(self.strava_id)}}]},
@@ -70,6 +78,7 @@ class Activity(BaseModel):
             start_date_local=datetime.fromisoformat(data["start_date_local"].replace("Z", "")),
             distance_meters=data.get("distance", 0.0),
             moving_time_seconds=data.get("moving_time", 0),
+            elapsed_time_seconds=data.get("elapsed_time", 0),
             total_elevation_gain=data.get("total_elevation_gain", 0.0),
             weighted_average_watts=data.get("weighted_average_watts"),
         )
